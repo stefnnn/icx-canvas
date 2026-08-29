@@ -1,0 +1,30 @@
+<main class="page-shell">
+  <h1>ICX Canvas Demo</h1>
+  <section class="workspace">
+    <div #boardViewport class="board-wrap">
+      <ng-whiteboard
+        #board
+        [boardId]="boardId"
+        [config]="config"
+        [data]="data"
+        [selectedTool]="activeTool"
+        (dataChange)="persist($event)"
+      ></ng-whiteboard>
+      <app-whiteboard-toolbar
+        [colors]="colors"
+        [tools]="tools"
+        [selectedColor]="selectedColor"
+        [selectedTool]="selectedTool"
+        (colorSelected)="chooseColor($event)"
+        (toolSelected)="chooseTool($event)"
+      ></app-whiteboard-toolbar>
+    </div>
+  </section>
+  <div class="below-canvas">
+    <p class="footnote"><span>↳</span> Automatisch im Browser gespeichert</p>
+    <a class="github-link" href="https://github.com/stefnnn/icx-canvas" target="_blank" rel="noreferrer">
+      <app-icon name="github"></app-icon>
+      <span>github.com/stefnnn/icx-canvas</span>
+    </a>
+  </div>
+</main>

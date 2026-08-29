@@ -1,0 +1,12 @@
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  min-width: 320px;
+  background: #f7f7f8;
+}
+button {
+  font: inherit;
+}

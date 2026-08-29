@@ -1,0 +1,4 @@
+<div class="canvas-tools">
+  <div class="color-menu"><button class="color-swatch primary" [style.backgroundColor]="selectedColor" aria-label="Open colors" (click)="colorsOpen = !colorsOpen"></button><div class="color-options" [class.open]="colorsOpen"><button *ngFor="let color of colors" class="color-swatch" [style.backgroundColor]="color" [class.active]="selectedColor === color" [attr.aria-label]="'Use ' + color" (click)="selectColor(color)"></button></div></div>
+  <div class="tool-row"><button *ngFor="let tool of tools" class="tool-button" [class.active]="selectedTool === tool.id" [class.danger]="tool.id === 'clear'" [attr.aria-label]="tool.label" [title]="tool.label" (click)="selectTool(tool.id)"><app-icon [name]="tool.icon"></app-icon></button></div>
+</div>
