@@ -33,6 +33,7 @@ export class AppComponent implements AfterViewInit, OnDestroy {
   readonly boardId = "canvas-studio-board";
   readonly colors = ["#20252d", "#ff6b5f", "#f6b73c", "#35bfa3", "#4d7cff"];
   readonly tools: ToolbarToolDefinition[] = [
+    { id: "select", label: "Select", icon: "select" },
     { id: "freehand", label: "Freehand", icon: "pencil" },
     { id: "square", label: "Square", icon: "square" },
     { id: "circle", label: "Circle", icon: "circle" },
@@ -77,6 +78,7 @@ export class AppComponent implements AfterViewInit, OnDestroy {
     this.boardViewport?.nativeElement.addEventListener("pointerdown", this.blockViewportGesture, { capture: true });
     this.boardViewport?.nativeElement.addEventListener("keydown", this.blockViewportGesture, { capture: true });
     this.boardViewport?.nativeElement.addEventListener("keyup", this.blockViewportGesture, { capture: true });
+    window.addEventListener("keydown", this.deleteSelectedOnKeyDown, { capture: true });
     this.whiteboardService.setActiveBoard(this.boardId);
     const saved = localStorage.getItem("canvas-studio-elements");
     if (saved) {
@@ -94,7 +96,30 @@ export class AppComponent implements AfterViewInit, OnDestroy {
     this.boardViewport?.nativeElement.removeEventListener("pointerdown", this.blockViewportGesture, { capture: true });
     this.boardViewport?.nativeElement.removeEventListener("keydown", this.blockViewportGesture, { capture: true });
     this.boardViewport?.nativeElement.removeEventListener("keyup", this.blockViewportGesture, { capture: true });
+    window.removeEventListener("keydown", this.deleteSelectedOnKeyDown, { capture: true });
   }
+
+  private readonly deleteSelectedOnKeyDown = (event: KeyboardEvent): void => {
+    if (!["Delete", "Backspace"].includes(event.key)) {
+      return;
+    }
+
+    const target = event.target as HTMLElement | null;
+    const activeElement = document.activeElement as HTMLElement | null;
+    const isTextInput = (element: HTMLElement | null): boolean =>
+      element?.tagName === "INPUT" || element?.tagName === "TEXTAREA" || element?.isContentEditable === true;
+    if (isTextInput(target) || isTextInput(activeElement)) {
+      return;
+    }
+
+    if (this.whiteboardService.getSelectedElements().length === 0) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    this.whiteboardService.deleteSelectedElements();
+  };
 
   private readonly blockViewportGesture = (event: Event): void => {
     const target = event.target as HTMLElement | null;
@@ -145,6 +170,7 @@ export class AppComponent implements AfterViewInit, OnDestroy {
       return;
     }
     const toolMap: Record<Exclude<ToolbarTool, "undo" | "clear">, ToolType> = {
+      select: ToolType.Select,
       freehand: ToolType.Pen,
       square: ToolType.Rectangle,
       circle: ToolType.Ellipse,
