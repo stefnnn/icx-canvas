@@ -2,7 +2,7 @@ import { CommonModule } from "@angular/common";
 import { Component, EventEmitter, Input, Output } from "@angular/core";
 import { IconComponent, IconName } from "./icon.component";
 
-export type ToolbarTool = "freehand" | "square" | "circle" | "arrow" | "erase" | "undo" | "clear";
+export type ToolbarTool = "freehand" | "square" | "circle" | "line" | "arrow" | "text" | "erase" | "undo" | "clear";
 export interface ToolbarToolDefinition {
   id: ToolbarTool;
   label: string;

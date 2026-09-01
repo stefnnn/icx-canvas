@@ -36,7 +36,9 @@ export class AppComponent implements AfterViewInit, OnDestroy {
     { id: "freehand", label: "Freehand", icon: "pencil" },
     { id: "square", label: "Square", icon: "square" },
     { id: "circle", label: "Circle", icon: "circle" },
+    { id: "line", label: "Line", icon: "line" },
     { id: "arrow", label: "Arrow", icon: "arrow" },
+    { id: "text", label: "Text", icon: "text" },
     { id: "erase", label: "Eraser", icon: "eraser" },
     { id: "undo", label: "Undo", icon: "undo" },
     { id: "clear", label: "Clear all", icon: "trash" },
@@ -146,7 +148,9 @@ export class AppComponent implements AfterViewInit, OnDestroy {
       freehand: ToolType.Pen,
       square: ToolType.Rectangle,
       circle: ToolType.Ellipse,
+      line: ToolType.Line,
       arrow: ToolType.Arrow,
+      text: ToolType.Text,
       erase: ToolType.Eraser,
     };
     this.activeTool = toolMap[tool];
