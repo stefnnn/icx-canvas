@@ -18,6 +18,16 @@ import {
 import { IconComponent } from "./icon.component";
 import { ToolbarTool, ToolbarToolDefinition, WhiteboardToolbarComponent } from "./whiteboard-toolbar.component";
 
+type CanvasTabId = "empty" | "image1" | "image2";
+
+interface CanvasTab {
+  id: CanvasTabId;
+  label: string;
+  src?: string;
+  width: number;
+  height: number;
+}
+
 @Component({
   selector: "app-root",
   standalone: true,
@@ -28,9 +38,12 @@ import { ToolbarTool, ToolbarToolDefinition, WhiteboardToolbarComponent } from "
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppComponent implements AfterViewInit, OnDestroy {
-  @ViewChild("board") board?: NgWhiteboardComponent;
   @ViewChild("boardViewport", { read: ElementRef }) boardViewport?: ElementRef<HTMLElement>;
-  readonly boardId = "canvas-studio-board";
+  readonly tabs: CanvasTab[] = [
+    { id: "empty", label: "Empty", width: 800, height: 500 },
+    { id: "image1", label: "Image 1", src: "assets/images/image_1.png", width: 714, height: 862 },
+    { id: "image2", label: "Image 2", src: "assets/images/image_2.png", width: 960, height: 988 },
+  ];
   readonly colors = ["#20252d", "#ff6b5f", "#f6b73c", "#35bfa3", "#4d7cff"];
   readonly tools: ToolbarToolDefinition[] = [
     { id: "select", label: "Select", icon: "select" },
@@ -48,13 +61,14 @@ export class AppComponent implements AfterViewInit, OnDestroy {
   selectedTool: ToolbarTool = "freehand";
   activeTool = ToolType.Pen;
   colorsOpen = false;
-  data: WhiteboardElement[] = [];
+  activeTabId: CanvasTabId = "empty";
+  dataByTab: Partial<Record<CanvasTabId, WhiteboardElement[]>> = {};
   config: Partial<WhiteboardConfig> = {
     canvasWidth: 800,
-    canvasHeight: 600,
+    canvasHeight: 500,
     fullScreen: false,
     center: false,
-    backgroundColor: "#ffffff",
+    backgroundColor: "transparent",
     strokeColor: this.selectedColor,
     strokeWidth: 4,
     fill: "transparent",
@@ -79,11 +93,13 @@ export class AppComponent implements AfterViewInit, OnDestroy {
     this.boardViewport?.nativeElement.addEventListener("keydown", this.blockViewportGesture, { capture: true });
     this.boardViewport?.nativeElement.addEventListener("keyup", this.blockViewportGesture, { capture: true });
     window.addEventListener("keydown", this.deleteSelectedOnKeyDown, { capture: true });
-    this.whiteboardService.setActiveBoard(this.boardId);
+    this.whiteboardService.setActiveBoard(this.boardIdFor(this.activeTabId));
     const saved = localStorage.getItem("canvas-studio-elements");
     if (saved) {
       try {
-        this.data = JSON.parse(saved) as WhiteboardElement[];
+        const parsed = JSON.parse(saved) as WhiteboardElement[] | Partial<Record<CanvasTabId, WhiteboardElement[]>>;
+        // Keep existing saved drawings in the empty board when upgrading from the single-board version.
+        this.dataByTab = Array.isArray(parsed) ? { empty: parsed } : parsed;
       } catch {
         localStorage.removeItem("canvas-studio-elements");
       }
@@ -159,6 +175,19 @@ export class AppComponent implements AfterViewInit, OnDestroy {
     this.whiteboardService.updateConfig({ strokeColor: color });
   }
 
+  get activeTab(): CanvasTab {
+    return this.tabs.find((tab) => tab.id === this.activeTabId) ?? this.tabs[0];
+  }
+
+  selectTab(tab: CanvasTab): void {
+    if (tab.id === this.activeTabId) {
+      return;
+    }
+
+    this.activeTabId = tab.id;
+    this.whiteboardService.setActiveBoard(this.boardIdFor(tab.id));
+  }
+
   chooseTool(tool: ToolbarTool): void {
     this.selectedTool = tool;
     if (tool === "undo") {
@@ -183,8 +212,42 @@ export class AppComponent implements AfterViewInit, OnDestroy {
     this.whiteboardService.setActiveTool(toolMap[tool]);
   }
 
-  persist(elements: WhiteboardElement[]): void {
-    this.data = elements;
-    localStorage.setItem("canvas-studio-elements", JSON.stringify(elements));
+  boardConfig(tab: CanvasTab): Partial<WhiteboardConfig> {
+    return {
+      ...this.config,
+      canvasWidth: tab.width,
+      canvasHeight: tab.height,
+      backgroundColor: "transparent",
+    };
+  }
+
+  boardIdFor(tabId: CanvasTabId): string {
+    return `canvas-studio-${tabId}`;
+  }
+
+  persist(tabId: CanvasTabId, elements: WhiteboardElement[]): void {
+    this.dataByTab[tabId] = elements;
+    const saved = this.readSavedData();
+    saved[tabId] = elements;
+    localStorage.setItem("canvas-studio-elements", JSON.stringify(saved));
+  }
+
+  getStoredData(tabId: CanvasTabId): WhiteboardElement[] {
+    const saved = this.readSavedData();
+    return this.dataByTab[tabId] ?? saved[tabId] ?? [];
+  }
+
+  private readSavedData(): Partial<Record<CanvasTabId, WhiteboardElement[]>> {
+    const saved = localStorage.getItem("canvas-studio-elements");
+    if (!saved) {
+      return this.dataByTab;
+    }
+
+    try {
+      const parsed = JSON.parse(saved) as WhiteboardElement[] | Partial<Record<CanvasTabId, WhiteboardElement[]>>;
+      return Array.isArray(parsed) ? { empty: parsed } : parsed;
+    } catch {
+      return { empty: [] };
+    }
   }
 }

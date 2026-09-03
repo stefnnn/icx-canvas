@@ -1,23 +1,44 @@
 <main class="page-shell">
   <h1>ICX Canvas Demo</h1>
   <section class="workspace">
+    <nav class="tab-bar" aria-label="Canvas samples">
+      <button
+        *ngFor="let tab of tabs"
+        class="tab-button"
+        [class.active]="activeTabId === tab.id"
+        [attr.aria-selected]="activeTabId === tab.id"
+        role="tab"
+        type="button"
+        (click)="selectTab(tab)"
+      >{{ tab.label }}</button>
+    </nav>
     <div #boardViewport class="board-wrap">
-      <ng-whiteboard
-        #board
-        [boardId]="boardId"
-        [config]="config"
-        [data]="data"
-        [selectedTool]="activeTool"
-        (dataChange)="persist($event)"
-      ></ng-whiteboard>
-      <app-whiteboard-toolbar
-        [colors]="colors"
-        [tools]="tools"
-        [selectedColor]="selectedColor"
-        [selectedTool]="selectedTool"
-        (colorSelected)="chooseColor($event)"
-        (toolSelected)="chooseTool($event)"
-      ></app-whiteboard-toolbar>
+      <div
+        *ngFor="let tab of tabs"
+        class="board-panel"
+        [class.active]="activeTabId === tab.id"
+        [hidden]="activeTabId !== tab.id"
+      >
+        <div class="board-stage" [style.width.px]="tab.width" [style.height.px]="tab.height">
+          <img *ngIf="tab.src" class="sample-image" [src]="tab.src" [alt]="tab.label" />
+          <ng-whiteboard
+            [boardId]="boardIdFor(tab.id)"
+            [config]="boardConfig(tab)"
+            [data]="getStoredData(tab.id)"
+            [selectedTool]="activeTool"
+            (dataChange)="persist(tab.id, $event)"
+          ></ng-whiteboard>
+          <app-whiteboard-toolbar
+            *ngIf="activeTabId === tab.id"
+            [colors]="colors"
+            [tools]="tools"
+            [selectedColor]="selectedColor"
+            [selectedTool]="selectedTool"
+            (colorSelected)="chooseColor($event)"
+            (toolSelected)="chooseTool($event)"
+          ></app-whiteboard-toolbar>
+        </div>
+      </div>
     </div>
   </section>
   <div class="below-canvas">
